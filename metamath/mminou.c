@@ -17,18 +17,6 @@
 #include "mminou.h"
 #include "mmcmdl.h" /* 9/3/99 - for g_commandPrompt global */
 
-#ifdef __EMSCRIPTEN__
-#include <emscripten.h>
-EM_ASYNC_JS(char*, fetch_user_input, (), {
-  const txt = await Module["user_input"]();
-  const lengthBytes = lengthBytesUTF8(txt) + 1;
-  const stringOnWasmHeap = _malloc(lengthBytes);
-  stringToUTF8(txt, stringOnWasmHeap, lengthBytes);
-  return stringOnWasmHeap
-});
-
-#endif
-
 #ifdef __WATCOMC__
   /* Bugs in WATCOMC:
      1. #include <conio.h> has compile errors
@@ -970,13 +958,7 @@ vstring cmdInput1(vstring ask)
 
   while (1) {
     if (g_commandFileNestingLevel == 0) {
-      #ifdef __EMSCRIPTEN__
-      // Yield to eventloop so we dont deadlock
-      emscripten_sleep(100);
-      commandLn = fetch_user_input();
-      #else
       commandLn = cmdInput(stdin, ask1);
-      #endif
       if (!commandLn) {
         commandLn = ""; /* Init vstring (was NULL) */
         /* 21-Feb-2010 nm Allow ^D to exit */
